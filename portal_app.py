@@ -34,7 +34,11 @@ st.markdown(
     """
     <style>
     html, body, [class*="css"] { direction: rtl; text-align: right; font-family: "Segoe UI", Tahoma, sans-serif; }
-    .stApp { background-color: #F3F6F9; }
+    .stApp {
+        background-color: #F3F6F9;
+        background-image: radial-gradient(#D8E3EC 1px, transparent 1px);
+        background-size: 22px 22px;
+    }
 
     /* Hide the default Streamlit chrome (deploy button, hamburger menu, footer)
        for a cleaner, product-like feel rather than an obvious dev tool. */
@@ -44,11 +48,11 @@ st.markdown(
        styled card, so it's hidden. */
     [data-testid="stHeaderActionElements"] { display: none; }
 
-    [data-testid="stMainBlockContainer"] { padding-top: 2.2rem; max-width: 980px; }
+    [data-testid="stMainBlockContainer"] { padding-top: 3rem; max-width: 980px; }
 
     /* App header */
-    .app-title { font-size: 1.9rem; font-weight: 800; color: #1B3A4B; margin-bottom: 0; }
-    .app-subtitle { color: #6B7A87; font-size: 0.98rem; margin-top: 2px; margin-bottom: 1.4rem; }
+    .app-title { font-size: 1.9rem; font-weight: 800; color: #1B3A4B; margin-bottom: 0; text-align: right; }
+    .app-subtitle { color: #6B7A87; font-size: 0.98rem; margin-top: 2px; margin-bottom: 1.4rem; text-align: right; }
 
     /* Login card */
     [data-testid="stForm"] {
@@ -84,9 +88,15 @@ st.markdown(
         margin: 18px 0;
         box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-    .law-card h3 { margin-top: 0; margin-bottom: 14px; color: #1B3A4B; }
-    .law-meta-row { color: #45525E; font-size: 0.95rem; margin: 6px 0; }
-    .law-meta-row b { color: #1B3A4B; }
+    .law-card h3 { margin-top: 0; margin-bottom: 18px; color: #1B3A4B; font-size: 1.55rem; }
+    .law-info-grid { display: flex; gap: 12px; margin-bottom: 16px; }
+    .law-info-box {
+        flex: 1; background-color: #EAF1F6; border-radius: 10px;
+        padding: 14px 8px; text-align: center;
+    }
+    .law-info-box .ico { font-size: 1.3rem; margin-bottom: 4px; }
+    .law-info-box .val { font-size: 1.25rem; font-weight: 800; color: #1B3A4B; }
+    .law-info-box .lbl { font-size: 0.8rem; color: #5C7285; margin-top: 2px; }
     .status-pill {
         display: inline-block; background-color: #FDEDEC; color: #C0392B;
         padding: 4px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 700;
@@ -141,9 +151,10 @@ st.markdown(
     }
 
     /* Sidebar branding */
-    [data-testid="stSidebarUserContent"] { padding-top: 1.5rem; }
-    .sidebar-welcome { color: #FFFFFF; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.2rem; }
-    .sidebar-caption { color: #B9CBD8; font-size: 0.85rem; margin-bottom: 1.2rem; }
+    [data-testid="stSidebarUserContent"] { padding-top: 1.5rem; text-align: right; direction: rtl; }
+    .sidebar-welcome { color: #FFFFFF; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.2rem; text-align: right; }
+    .sidebar-caption { color: #B9CBD8; font-size: 0.85rem; margin-bottom: 1rem; text-align: right; }
+    [data-testid="stSidebarUserContent"] [data-testid="stWidgetLabel"] p { color: #FFFFFF !important; text-align: right; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -181,13 +192,20 @@ def render_login() -> None:
 
 def render_logout_sidebar() -> None:
     with st.sidebar:
+        display_name = st.session_state.get("display_name", "")
+        greeting = display_name if display_name else st.session_state["username"]
         st.markdown(
-            f'<div class="sidebar-welcome">👋 أهلاً، {st.session_state["username"]}</div>'
+            f'<div class="sidebar-welcome">👋 أهلاً، {greeting}</div>'
             '<div class="sidebar-caption">بوابة تدقيق تواريخ الانتهاء</div>',
             unsafe_allow_html=True,
         )
+        new_name = st.text_input("اسمك (اختياري)", value=display_name, placeholder="اكتب اسمك هون")
+        if new_name != display_name:
+            st.session_state["display_name"] = new_name
+            st.rerun()
         if st.button("🚪 تسجيل خروج", use_container_width=True):
             del st.session_state["username"]
+            st.session_state.pop("display_name", None)
             st.rerun()
 
 
@@ -260,9 +278,11 @@ def render_law_card(row: pd.Series) -> None:
         f"""
         <div class="law-card">
             <h3>{row['Law_Name']}</h3>
-            <div class="law-meta-row">🔢 <b>رقم القانون:</b> {row['Law_Number']}</div>
-            <div class="law-meta-row">📅 <b>السنة:</b> {row['Year']}</div>
-            <div class="law-meta-row">🆔 <b>pmk_ID:</b> {row['pmk_ID']}</div>
+            <div class="law-info-grid">
+                <div class="law-info-box"><div class="ico">🔢</div><div class="val">{row['Law_Number']}</div><div class="lbl">رقم القانون</div></div>
+                <div class="law-info-box"><div class="ico">📅</div><div class="val">{row['Year']}</div><div class="lbl">السنة</div></div>
+                <div class="law-info-box"><div class="ico">🆔</div><div class="val">{row['pmk_ID']}</div><div class="lbl">pmk_ID</div></div>
+            </div>
             <span class="status-pill">⛔ {row['Status_display']}</span>
         </div>
         """,

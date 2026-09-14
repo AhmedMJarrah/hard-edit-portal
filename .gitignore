@@ -7,3 +7,4 @@ __pycache__/
 .hard/
 hard/
 secrets/
+make_secrets_toml.py
