@@ -1,0 +1,9 @@
+.hard_edit/
+.env
+outputs/
+logs/
+data/
+__pycache__/
+.hard/
+hard/
+secrets/
