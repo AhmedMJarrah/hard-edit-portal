@@ -223,7 +223,9 @@ def load_my_rows(username: str) -> pd.DataFrame:
     df = sheets_client.get_all_records_as_df(worksheet)
     if df.empty:
         return df
-    return df[df["assigned_to"] == username].reset_index(drop=True)
+    mine = df[df["assigned_to"] == username].copy()
+    mine["_year_sort"] = pd.to_numeric(mine["Year"], errors="coerce")
+    return mine.sort_values("_year_sort", ascending=False).drop(columns="_year_sort").reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
